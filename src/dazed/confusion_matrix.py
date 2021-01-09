@@ -1,8 +1,6 @@
-from collections import defaultdict
 from itertools import combinations
 
 import numpy as np
-from numpy.core.defchararray import index
 import pandas as pd
 
 
@@ -40,6 +38,7 @@ def _onehot_to_sparse(y, labels=None, multilabel=False):
 def _all_combinations(labels):
     num_labels = len(labels)
     string_labels = [str(l) for l in labels]
+    string_labels.sort()
     label_combinations = [""]
     for length in range(1, num_labels + 1):
         label_combinations.extend(
@@ -215,7 +214,7 @@ class ConfusionMatrix:
             )
 
     def as_df(self, present_only=True):
-        matrix, labels = self.get_matrix(self, present_only=present_only)
+        matrix, labels = self.as_array(present_only=present_only)
         return pd.DataFrame(matrix, index=labels, columns=labels)
 
     def as_str(self, present_only=True):
@@ -234,8 +233,8 @@ class ConfusionMatrix:
             return self._sparse_info_lists[i][j]
         except KeyError:
             if (
-                label_1 in self._label_to_sparse_index
-                and label_2 in self._label_to_sparse_index
+                label_1 in self._label_to_index
+                and label_2 in self._label_to_index
             ):
                 return []
             else:

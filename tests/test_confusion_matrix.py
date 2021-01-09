@@ -164,12 +164,12 @@ def test_init_grid_coords():
 
 def test_all_combinations_int():
     assert CM._all_combinations([0, 1]) == ["", "0", "0, 1", "1"]
-    assert CM._all_combinations([1, 0]) == ["", "0", "1", "1, 0"]
+    assert CM._all_combinations([1, 0]) == ["", "0", "0, 1", "1"]
 
 
 def test_all_combinations_str():
     assert CM._all_combinations(["a", "b"]) == ["", "a", "a, b", "b"]
-    assert CM._all_combinations(["b", "a"]) == ["", "a", "b", "b, a"]
+    assert CM._all_combinations(["b", "a"]) == ["", "a", "a, b", "b"]
 
 
 def test_onehot_to_sparse_singlelabel_int():
