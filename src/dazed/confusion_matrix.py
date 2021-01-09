@@ -130,9 +130,9 @@ class ConfusionMatrix:
             self._labels
         )
 
-        # cm and bins
+        # cm and info_lists
         self._sparse_matrix = self._create_matrix(y1, y2, self._label_to_sparse_index)
-        self._sparse_bins = self._create_bins(y1, y2, info, self._label_to_sparse_index)
+        self._sparse_info_lists = self._create_info_lists(y1, y2, info, self._label_to_sparse_index)
 
     @classmethod
     def from_df(
@@ -173,7 +173,6 @@ class ConfusionMatrix:
 
     @classmethod
     def from_onehot(cls, y1, y2, labels=None, info=None, multilabel=False):
-        num_columns = y1.shape[1]
         y1 = _onehot_to_sparse(y1, labels, multilabel)
         y2 = _onehot_to_sparse(y2, labels, multilabel)
         if multilabel:
@@ -200,11 +199,11 @@ class ConfusionMatrix:
         return cm
 
     @staticmethod
-    def _create_bins(y1, y2, info, label_to_index):
-        bins = _init_list_array(len(label_to_index), len(label_to_index), list)
+    def _create_info_lists(y1, y2, info, label_to_index):
+        info_lists = _init_list_array(len(label_to_index), len(label_to_index), list)
         for y1_i, y2_i, info_i in zip(y1, y2, info):
-            bins[label_to_index[y1_i]][label_to_index[y2_i]].append(info_i)
-        return bins
+            info_lists[label_to_index[y1_i]][label_to_index[y2_i]].append(info_i)
+        return info_lists
 
     def as_array(self, present_only=True):
         if present_only:
@@ -228,11 +227,11 @@ class ConfusionMatrix:
             key = _get_key_string(self._index_to_label)
         return "".join([m[:-2] + "     " + k for m, k in zip(matrix, key)])
 
-    def get_bin(self, label_1, label_2):
+    def label_pair_info(self, label_1, label_2):
         try:
             i = self._label_to_sparse_index[label_1]
             j = self._label_to_sparse_index[label_2]
-            return self._sparse_bins[i][j]
+            return self._sparse_info_lists[i][j]
         except KeyError:
             if (
                 label_1 in self._label_to_sparse_index

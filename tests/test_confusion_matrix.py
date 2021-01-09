@@ -138,7 +138,7 @@ def check_confusion_matrix_values(
         np.testing.assert_array_equal(sparse_matrix, data.sparse_matrix)
     if not skip_bin_check:
         for bin_labels, bin_info in data.bins.items():
-            assert confusion_matrix.get_bin(*bin_labels) == bin_info
+            assert confusion_matrix.label_pair_info(*bin_labels) == bin_info
     if not skip_most_confused_check:
         assert confusion_matrix.most_confused() == data.most_confused
 
@@ -228,7 +228,7 @@ def test_ConfusionMatrix_from_df_no_labels_singlelabel():
     data.matrix = data.sparse_matrix  # matrix is sparse as labels are inferred
     check_confusion_matrix_values(data, cm, skip_bin_check=True)
     for bin_labels, bin_info in data.bins.items():
-        df = pd.DataFrame(cm.get_bin(*bin_labels), columns=["info"])
+        df = pd.DataFrame(cm.label_pair_info(*bin_labels), columns=["info"])
         assert df["info"].tolist() == bin_info
 
 
@@ -240,7 +240,7 @@ def test_ConfusionMatrix_from_df_singlelabel():
     )
     check_confusion_matrix_values(data, cm, skip_bin_check=True)
     for bin_labels, bin_info in data.bins.items():
-        df = pd.DataFrame(cm.get_bin(*bin_labels), columns=["info"])
+        df = pd.DataFrame(cm.label_pair_info(*bin_labels), columns=["info"])
         assert df["info"].tolist() == bin_info
 
 
