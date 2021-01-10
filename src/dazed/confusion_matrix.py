@@ -1,13 +1,51 @@
+from __future__ import annotations
+from functools import wraps
 from itertools import combinations
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
-
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 import numpy as np
-import pandas as pd  # type: ignore
 
+# Optional pandas import
+try:
+    import pandas as pd  # type: ignore
+except ModuleNotFoundError:
+    pass
+
+# Type definitions
 T = TypeVar("T")
 Label = Union[int, str]
 SparseValues = Union[List[Label], List[List[Label]]]
 IntegerSparseValues = Union[List[int], List[List[int]]]
+
+
+def _requires_optional(
+    imported_name: str, display_name: Optional[str] = None
+) -> Callable:
+    def actual_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if imported_name in globals():
+                return func(*args, **kwargs)
+            else:
+                raise ModuleNotFoundError(
+                    (
+                        f"{display_name or imported_name} must be installed in order to use "
+                        f"this functionality. Check dazed docs regarding optional "
+                        f"dependancies."
+                    )
+                )
+
+        return wrapper
+
+    return actual_decorator
 
 
 def _init_list_array(size1: int, size2: int, val_type: T) -> List[List[T]]:
@@ -154,6 +192,7 @@ class ConfusionMatrix:
         )
 
     @classmethod
+    @_requires_optional("pd", "pandas")
     def from_df(
         cls,
         df: pd.DataFrame,
@@ -259,6 +298,7 @@ class ConfusionMatrix:
                 self._labels,
             )
 
+    @_requires_optional("pd", "pandas")
     def as_df(self, present_only: bool = True) -> pd.DataFrame:
         matrix, labels = self.as_array(present_only=present_only)
         return pd.DataFrame(matrix, index=labels, columns=labels)
