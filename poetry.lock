@@ -100,7 +100,7 @@ version = "0.6"
 [[package]]
 category = "dev"
 description = "Decorators for Humans"
-marker = "python_version >= \"3.6.1\" and python_version < \"3.9\""
+marker = "python_version >= \"3.6\" and python_version < \"3.9\""
 name = "decorator"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
@@ -109,7 +109,7 @@ version = "4.4.2"
 [[package]]
 category = "dev"
 description = "A library to calculate python dependency graphs."
-marker = "python_version >= \"3.6.1\" and python_version < \"3.9\""
+marker = "python_version >= \"3.6\" and python_version < \"3.9\""
 name = "importlab"
 optional = false
 python-versions = ">=2.7.0"
@@ -166,7 +166,7 @@ version = "0.4.3"
 [[package]]
 category = "dev"
 description = "Python package for creating and manipulating graphs and networks"
-marker = "python_version >= \"3.6.1\" and python_version < \"3.9\""
+marker = "python_version >= \"3.6\" and python_version < \"3.9\""
 name = "networkx"
 optional = false
 python-versions = ">=3.6"
@@ -191,7 +191,7 @@ scipy = ["scipy"]
 [[package]]
 category = "dev"
 description = "Ninja is a small build system with a focus on speed"
-marker = "python_version >= \"3.6.1\" and python_version < \"3.9\""
+marker = "python_version >= \"3.6\" and python_version < \"3.9\""
 name = "ninja"
 optional = false
 python-versions = "*"
@@ -326,7 +326,7 @@ six = ">=1.5"
 [[package]]
 category = "dev"
 description = "Python type inferencer"
-marker = "python_version >= \"3.6.1\" and python_version < \"3.9\""
+marker = "python_version >= \"3.6\" and python_version < \"3.9\""
 name = "pytype"
 optional = false
 python-versions = "<3.9,>=3.6"
@@ -351,7 +351,7 @@ version = "2020.5"
 [[package]]
 category = "dev"
 description = "YAML parser and emitter for Python"
-marker = "python_version >= \"3.6.1\" and python_version < \"3.9\""
+marker = "python_version >= \"3.6\" and python_version < \"3.9\""
 name = "pyyaml"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
@@ -453,7 +453,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 pandas = ["pandas"]
 
 [metadata]
-content-hash = "56b19cb7f52ca0648fbbea34728fc9922f60dfb515a8fc73fdd054cc39841d8f"
+content-hash = "220593ac8528fd2951412f7e77a88b891207d0b8ab906ad200f07593bfa26781"
 python-versions = "^3.6.1"
 
 [metadata.files]
