@@ -8,7 +8,7 @@ def _init_list_array(size1, size2, val_type):
     lists = []
     for i in range(size1):
         lists.append([])
-        for j in range(size2):
+        for _ in range(size2):
             lists[i].append(val_type())
     return lists
 
@@ -37,7 +37,7 @@ def _onehot_to_sparse(y, labels=None, multilabel=False):
 
 def _all_combinations(labels):
     num_labels = len(labels)
-    string_labels = [str(l) for l in labels]
+    string_labels = [str(label) for label in labels]
     string_labels.sort()
     label_combinations = [""]
     for length in range(1, num_labels + 1):
@@ -131,7 +131,9 @@ class ConfusionMatrix:
 
         # cm and info_lists
         self._sparse_matrix = self._create_matrix(y1, y2, self._label_to_sparse_index)
-        self._sparse_info_lists = self._create_info_lists(y1, y2, info, self._label_to_sparse_index)
+        self._sparse_info_lists = self._create_info_lists(
+            y1, y2, info, self._label_to_sparse_index
+        )
 
     @classmethod
     def from_df(
@@ -232,10 +234,7 @@ class ConfusionMatrix:
             j = self._label_to_sparse_index[label_2]
             return self._sparse_info_lists[i][j]
         except KeyError:
-            if (
-                label_1 in self._label_to_index
-                and label_2 in self._label_to_index
-            ):
+            if label_1 in self._label_to_index and label_2 in self._label_to_index:
                 return []
             else:
                 raise ValueError
@@ -267,4 +266,3 @@ class ConfusionMatrix:
 
     def __repr__(self):
         return self.as_str()
-        
