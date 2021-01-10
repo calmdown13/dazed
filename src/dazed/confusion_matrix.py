@@ -1,4 +1,3 @@
-from __future__ import annotations
 from functools import wraps
 from itertools import combinations
 from typing import (
@@ -195,7 +194,7 @@ class ConfusionMatrix:
     @_requires_optional("pd", "pandas")
     def from_df(
         cls,
-        df: pd.DataFrame,
+        df: "pd.DataFrame",
         y1_names: Union[List[str], str],
         y2_names: Union[List[str], str],
         labels: Optional[List[Label]] = None,
@@ -299,7 +298,7 @@ class ConfusionMatrix:
             )
 
     @_requires_optional("pd", "pandas")
-    def as_df(self, present_only: bool = True) -> pd.DataFrame:
+    def as_df(self, present_only: bool = True) -> "pd.DataFrame":
         matrix, labels = self.as_array(present_only=present_only)
         return pd.DataFrame(matrix, index=labels, columns=labels)
 
