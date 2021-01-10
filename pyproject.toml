@@ -5,9 +5,9 @@ description = "A tiny confusion matrix package."
 authors = ["calmdown13 <callum@callumdownie.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.6.1"
 numpy = "^1.19.5"
-pandas = {version = "^1.2.0", optional = true}
+pandas = {version = "^1.1.5", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
