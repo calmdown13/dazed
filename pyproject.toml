@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dazed"
 version = "0.1.0"
-description = "A tiny confusion matrix package."
+description = "A confusion matrix package."
 authors = ["calmdown13 <callum@callumdownie.com>"]
 
 [tool.poetry.dependencies]
