@@ -150,7 +150,7 @@ class ConfusionMatrix:
                 df[y2_names].tolist(),
                 labels=labels,
                 info=info,
-                multilabel=False,
+                multilabel=multilabel,
             )
         elif isinstance(y1_names, list):
             return cls.from_onehot(
@@ -158,7 +158,7 @@ class ConfusionMatrix:
                 df[y2_names].values,
                 labels=labels,
                 info=info,
-                multilabel=False,
+                multilabel=multilabel,
             )
         else:
             raise ValueError

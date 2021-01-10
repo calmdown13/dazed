@@ -32,11 +32,7 @@ class SingleLabelData:
     ]
     sparse_matrix = sklearn.metrics.confusion_matrix(y1, y2)
     matrix = sklearn.metrics.confusion_matrix(y1, y2, labels=labels)
-    bins = {
-        (0, 1): ["a", "a", "a"],
-        (1, 2): [],
-        (3, 2): ["d", "d"],
-    }
+    bins = {(0, 1): ["a", "a", "a"], (1, 2): [], (3, 2): ["d", "d"]}
     most_confused = [(0, 1, 3), (3, 2, 2), (2, 3, 1)]
 
 
@@ -116,11 +112,7 @@ class MultiLabelData:
         multi_to_single(y2, all_combinations),
         labels=list(range(len(all_combinations))),
     )
-    bins = {
-        ("", "0"): ["a", "a", "a"],
-        ("0", "1"): [],
-        ("0, 1", "1"): ["d", "d"],
-    }
+    bins = {("", "0"): ["a", "a", "a"], ("0", "1"): [], ("0, 1", "1"): ["d", "d"]}
     most_confused = [("", "0", 3), ("0, 1", "1", 2), ("1", "0, 1", 1)]
 
 
@@ -186,22 +178,22 @@ def test_onehot_to_sparse_singlelabel_int_raise_error():
     data = np.array([[0, 0, 0], [0, 0, 1], [1, 0, 1]])
     try:
         CM._onehot_to_sparse(data)
-        assert False
-    except ValueError as e:
+        raise AssertionError
+    except ValueError:
         pass
     else:
-        assert False
+        raise AssertionError
 
 
 def test_onehot_to_sparse_singlelabel_bool_raise_error():
     data = np.array([[False, False, False], [False, False, True], [True, False, True]])
     try:
         CM._onehot_to_sparse(data)
-        assert False
-    except ValueError as e:
+        raise AssertionError
+    except ValueError:
         pass
     else:
-        assert False
+        raise AssertionError
 
 
 def test_onehot_to_sparse_multilabel_int():
@@ -304,7 +296,7 @@ def test_ConfusionMatrix_from_onehot_string_labels_singlelabel():
     y1_onehot[list(range(len(data.y1))), data.y1] = 1
     y2_onehot = np.zeros((len(data.y2), len(data.labels)))
     y2_onehot[list(range(len(data.y2))), data.y2] = 1
-    data.labels = [str(l) for l in data.labels]
+    data.labels = [str(label) for label in data.labels]
     data.bins = {(str(k1), str(k2)): v for (k1, k2), v in data.bins.items()}
     data.most_confused = [(str(v1), str(v2), v3) for v1, v2, v3 in data.most_confused]
     cm = CM.ConfusionMatrix.from_onehot(
@@ -322,7 +314,7 @@ def test_ConfusionMatrix_from_onehot_string_labels_multilabel():
             y1_onehot[i, y1il] = 1
         for y2il in y2i:
             y2_onehot[i, y2il] = 1
-    data.labels = [str(l) for l in data.labels]
+    data.labels = [str(label) for label in data.labels]
     data.bins = {(str(k1), str(k2)): v for (k1, k2), v in data.bins.items()}
     data.most_confused = [(str(v1), str(v2), v3) for v1, v2, v3 in data.most_confused]
     cm = CM.ConfusionMatrix.from_onehot(
