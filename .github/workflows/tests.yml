@@ -12,6 +12,7 @@ jobs:
     - run: pip install poetry
     - run: poetry install -E pandas
     - run: poetry run pytest --cov
+    - run: poetry run pytype
   tests-py37:
     runs-on: ubuntu-latest
     steps:
@@ -23,6 +24,7 @@ jobs:
     - run: pip install poetry
     - run: poetry install -E pandas
     - run: poetry run pytest --cov
+    - run: poetry run pytype
   tests-py38:
     runs-on: ubuntu-latest
     steps:
@@ -34,3 +36,4 @@ jobs:
     - run: pip install poetry
     - run: poetry install -E pandas
     - run: poetry run pytest --cov
+    - run: poetry run pytype

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore
 import sklearn.metrics
 
 import dazed.confusion_matrix as CM

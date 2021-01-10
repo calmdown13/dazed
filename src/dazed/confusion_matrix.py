@@ -1,11 +1,17 @@
 from itertools import combinations
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore
+
+T = TypeVar("T")
+Label = Union[int, str]
+SparseValues = Union[List[Label], List[List[Label]]]
+IntegerSparseValues = Union[List[int], List[List[int]]]
 
 
-def _init_list_array(size1, size2, val_type):
-    lists = []
+def _init_list_array(size1: int, size2: int, val_type: T) -> List[List[T]]:
+    lists: List[Any] = []
     for i in range(size1):
         lists.append([])
         for _ in range(size2):
@@ -13,13 +19,15 @@ def _init_list_array(size1, size2, val_type):
     return lists
 
 
-def _init_grid_coords(size1, size2):
+def _init_grid_coords(size1: int, size2: int) -> Tuple[np.ndarray, np.ndarray]:
     ix, jx = np.meshgrid(range(size1), range(size2))
     ix, jx = ix.flatten(), jx.flatten()
     return ix, jx
 
 
-def _onehot_to_sparse(y, labels=None, multilabel=False):
+def _onehot_to_sparse(
+    y: np.ndarray, labels: List[Label] = None, multilabel: bool = False
+) -> SparseValues:
     num_columns = y.shape[1]
     if not multilabel:
         if np.any(np.sum(y, axis=1) > 1):
@@ -35,7 +43,7 @@ def _onehot_to_sparse(y, labels=None, multilabel=False):
     return sparse
 
 
-def _all_combinations(labels):
+def _all_combinations(labels: List[Label]) -> List[str]:
     num_labels = len(labels)
     string_labels = [str(label) for label in labels]
     string_labels.sort()
@@ -48,7 +56,9 @@ def _all_combinations(labels):
     return label_combinations
 
 
-def indices_to_labels(y, labels):
+def indices_to_labels(
+    y: IntegerSparseValues, labels: List[T]
+) -> Union[List[T], List[List[T]]]:
     y_ret = []
     for yi in y:
         if isinstance(yi, list):
@@ -61,7 +71,7 @@ def indices_to_labels(y, labels):
     return y_ret
 
 
-def _get_matrix_string(matrix):
+def _get_matrix_string(matrix: np.ndarray) -> List[str]:
     h, w = matrix.shape
     max_index_len = _str_len(h)
     max_val_len = max(_str_len(np.amax(matrix)), _str_len(w))
@@ -74,7 +84,7 @@ def _get_matrix_string(matrix):
     return rows
 
 
-def _get_key_string(index_to_label):
+def _get_key_string(index_to_label: Dict[int, Label]) -> List[str]:
     max_index_len = max(len("index"), max([_str_len(k) for k in index_to_label]))
     max_val_len = max(len("label"), max([_str_len(v) for v in index_to_label.values()]))
     rows = ["\n"]
@@ -86,11 +96,13 @@ def _get_key_string(index_to_label):
     return rows
 
 
-def _get_dashed_line(max_index_len, max_val_len, num_vals):
+def _get_dashed_line(max_index_len: int, max_val_len: int, num_vals: int) -> str:
     return "-" * (max_index_len + 2 + (max_val_len + 1) * num_vals) + " \n"
 
 
-def _get_row_string(index, max_index_len, vals, max_val_len):
+def _get_row_string(
+    index: Any, max_index_len: int, vals: List[Any], max_val_len: int
+) -> str:
     index_len = _str_len(index)
     strings = [f"{' '*(max_index_len-index_len)}{index} |"]
     for val in vals:
@@ -100,17 +112,23 @@ def _get_row_string(index, max_index_len, vals, max_val_len):
     return " ".join(strings)
 
 
-def _str_len(integer):
-    return len(str(integer))
+def _str_len(val: Any) -> int:
+    return len(str(val))
 
 
 class ConfusionMatrix:
-    def __init__(self, y1, y2, labels=None, info=None):
+    def __init__(
+        self,
+        y1: SparseValues,
+        y2: SparseValues,
+        labels: Optional[List[Label]] = None,
+        info: Optional[List[Any]] = None,
+    ):
         self._y1 = y1
         self._y2 = y2
 
         # labels
-        self._sparse_labels = np.unique(y1 + y2)
+        self._sparse_labels = np.unique(y1 + y2).tolist()
         if labels is None:
             self._labels = self._sparse_labels
         else:
@@ -137,7 +155,12 @@ class ConfusionMatrix:
 
     @classmethod
     def from_df(
-        cls, df, y1_names, y2_names, labels=None, info_names=None, multilabel=False
+        cls,
+        df: pd.DataFrame,
+        y1_names: Union[List[str], str],
+        y2_names: Union[List[str], str],
+        labels: Optional[List[Label]] = None,
+        info_names: Optional[List[str]] = None,
     ):
         assert type(y1_names) == type(y2_names)
         if info_names is None:
@@ -150,7 +173,7 @@ class ConfusionMatrix:
                 df[y2_names].tolist(),
                 labels=labels,
                 info=info,
-                multilabel=multilabel,
+                multilabel=False,
             )
         elif isinstance(y1_names, list):
             return cls.from_onehot(
@@ -158,13 +181,20 @@ class ConfusionMatrix:
                 df[y2_names].values,
                 labels=labels,
                 info=info,
-                multilabel=multilabel,
+                multilabel=True,
             )
         else:
             raise ValueError
 
     @classmethod
-    def from_sparse(cls, y1, y2, labels=None, info=None, multilabel=False):
+    def from_sparse(
+        cls,
+        y1,
+        y2,
+        labels: Optional[List[Label]] = None,
+        info: Optional[List[Any]] = None,
+        multilabel: bool = False,
+    ):
         if multilabel:
             if labels is not None:
                 labels = _all_combinations(labels)
@@ -173,7 +203,14 @@ class ConfusionMatrix:
         return cls(y1, y2, labels=labels, info=info)
 
     @classmethod
-    def from_onehot(cls, y1, y2, labels=None, info=None, multilabel=False):
+    def from_onehot(
+        cls,
+        y1,
+        y2,
+        labels: Optional[List[Label]] = None,
+        info: Optional[List[Any]] = None,
+        multilabel: bool = False,
+    ):
         y1 = _onehot_to_sparse(y1, labels, multilabel)
         y2 = _onehot_to_sparse(y2, labels, multilabel)
         if multilabel:
@@ -184,7 +221,7 @@ class ConfusionMatrix:
         return cls(y1, y2, labels=labels, info=info)
 
     @staticmethod
-    def _create_label_maps(labels):
+    def _create_label_maps(labels: List[T]) -> Tuple[Dict[T, int], Dict[int, T]]:
         label_to_index = {}
         index_to_label = {}
         for i, l in enumerate(labels):
@@ -193,20 +230,27 @@ class ConfusionMatrix:
         return label_to_index, index_to_label
 
     @staticmethod
-    def _create_matrix(y1, y2, label_to_index):
-        cm = np.zeros((len(label_to_index), len(label_to_index)), dtype=int)
+    def _create_matrix(
+        y1: SparseValues, y2: SparseValues, label_to_index: Dict[Label, int]
+    ) -> np.ndarray:
+        cm: np.ndarray = np.zeros((len(label_to_index), len(label_to_index)), dtype=int)
         for y1_i, y2_i in zip(y1, y2):
             cm[label_to_index[y1_i], label_to_index[y2_i]] += 1
         return cm
 
     @staticmethod
-    def _create_info_lists(y1, y2, info, label_to_index):
+    def _create_info_lists(
+        y1: SparseValues,
+        y2: SparseValues,
+        info: List[T],
+        label_to_index: Dict[Label, int],
+    ) -> List[List[T]]:
         info_lists = _init_list_array(len(label_to_index), len(label_to_index), list)
         for y1_i, y2_i, info_i in zip(y1, y2, info):
             info_lists[label_to_index[y1_i]][label_to_index[y2_i]].append(info_i)
         return info_lists
 
-    def as_array(self, present_only=True):
+    def as_array(self, present_only: bool = True) -> Tuple[np.ndarray, List[Label]]:
         if present_only:
             return self._sparse_matrix, self._sparse_labels
         else:
@@ -215,11 +259,11 @@ class ConfusionMatrix:
                 self._labels,
             )
 
-    def as_df(self, present_only=True):
+    def as_df(self, present_only: bool = True) -> pd.DataFrame:
         matrix, labels = self.as_array(present_only=present_only)
         return pd.DataFrame(matrix, index=labels, columns=labels)
 
-    def as_str(self, present_only=True):
+    def as_str(self, present_only: bool = True) -> str:
         if present_only:
             matrix = _get_matrix_string(self._sparse_matrix)
             key = _get_key_string(self._sparse_index_to_label)
@@ -228,7 +272,7 @@ class ConfusionMatrix:
             key = _get_key_string(self._index_to_label)
         return "".join([m[:-2] + "     " + k for m, k in zip(matrix, key)])
 
-    def label_pair_info(self, label_1, label_2):
+    def label_pair_info(self, label_1: Label, label_2: Label) -> List[Any]:
         try:
             i = self._label_to_sparse_index[label_1]
             j = self._label_to_sparse_index[label_2]
@@ -239,7 +283,7 @@ class ConfusionMatrix:
             else:
                 raise ValueError
 
-    def most_confused(self):
+    def most_confused(self) -> List[Tuple[Label, Label, int]]:
         num_labels = len(self._sparse_labels)
         ix, jx = _init_grid_coords(num_labels, num_labels)
         matrix = self._sparse_matrix.copy()
@@ -261,8 +305,8 @@ class ConfusionMatrix:
                 break
         return ret
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.as_str()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.as_str()
