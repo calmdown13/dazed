@@ -1,3 +1,5 @@
+"""Confusion matrix module."""
+
 from functools import wraps
 from itertools import combinations
 from typing import (
@@ -76,7 +78,7 @@ def _onehot_to_sparse(
             sparse.append(np.where(row)[0].tolist())
     if labels is not None:
         assert len(labels) == num_columns
-        sparse = indices_to_labels(sparse, labels)
+        sparse = _indices_to_labels(sparse, labels)
     return sparse
 
 
@@ -93,7 +95,7 @@ def _all_combinations(labels: List[Label]) -> List[str]:
     return label_combinations
 
 
-def indices_to_labels(
+def _indices_to_labels(
     y: IntegerSparseValues, labels: List[T]
 ) -> Union[List[T], List[List[T]]]:
     y_ret = []
@@ -154,13 +156,41 @@ def _str_len(val: Any) -> int:
 
 
 class ConfusionMatrix:
+    """Construct a confusion matrix.
+
+    Creates a confusion matrix from multiple different data formats and provides
+    useful methods for exploring the data.
+
+    """
+
     def __init__(
         self,
-        y1: SparseValues,
-        y2: SparseValues,
+        y1: List[Label],
+        y2: List[Label],
         labels: Optional[List[Label]] = None,
         info: Optional[List[Any]] = None,
     ):
+        """Contruct a confusion matrix from sparse values.
+
+        Arguments:
+            y1: A list of true labels.
+            y2: A list of predicted labels.
+            labels: A list of all possible labels (in case not present in y1 and y2).
+            info: A list containing any additional info about each sample.
+
+        Example:
+            >>> from dazed import ConfusionMatrix
+            >>> truth = ["cat", "dog", "cat", "dog", "fish"]
+            >>> pred = ["cat", "dog", "dog", "cat", "fish"]
+            >>> ConfusionMatrix(truth, pred)
+              | 0 1 2     index | label
+            ---------     -------------
+            0 | 1 1 0         0 |   cat
+            1 | 1 1 0         1 |   dog
+            2 | 0 0 1         2 |  fish
+            ---------     -------------
+
+        """
         self._y1 = y1
         self._y2 = y2
 
@@ -200,6 +230,25 @@ class ConfusionMatrix:
         labels: Optional[List[Label]] = None,
         info_names: Optional[List[str]] = None,
     ):
+        """Contruct a confusion matrix from a pandas dataframe.
+
+        Arguments:
+            df: A pandas dataframe containing either a column of sparse labels
+                or multiple columns of onehot encoded values.
+            y1_names: True column name or a list of prediction column
+                names if multilabel.
+            y2_names: Prediction column name or a list of prediction column
+                names if multilabel.
+            labels: A list of all possible labels (in case not present in y1 and y2).
+            info_names: A list of column names to use for additional sample info.
+
+        Returns:
+            A confusion matrix.
+
+        Raises:
+            ValueError: If label y1_names or y2 names are not the correct type.
+
+        """
         assert type(y1_names) == type(y2_names)
         if info_names is None:
             info = None
@@ -227,12 +276,25 @@ class ConfusionMatrix:
     @classmethod
     def from_sparse(
         cls,
-        y1,
-        y2,
+        y1: SparseValues,
+        y2: SparseValues,
         labels: Optional[List[Label]] = None,
         info: Optional[List[Any]] = None,
         multilabel: bool = False,
     ):
+        """Contruct a confusion matrix from sparse values.
+
+        Arguments:
+            y1: A list of true labels (a list of lists if multilabel).
+            y2: A list of predicted labels (a list of lists if multilabel).
+            labels: A list of all possible labels (in case not present in y1 and y2).
+            info: A list containing any additional info about each sample.
+            multilabel: Indicates whether each sample can have multiple labels.
+
+        Returns:
+            A confusion matrix.
+
+        """
         if multilabel:
             if labels is not None:
                 labels = _all_combinations(labels)
@@ -243,12 +305,25 @@ class ConfusionMatrix:
     @classmethod
     def from_onehot(
         cls,
-        y1,
-        y2,
+        y1: np.ndarray,
+        y2: np.ndarray,
         labels: Optional[List[Label]] = None,
         info: Optional[List[Any]] = None,
         multilabel: bool = False,
     ):
+        """Contruct a confusion matrix from onehot encoded values.
+
+        Arguments:
+            y1: An array of onehot encoded values of shape [num_samples, num_labels].
+            y2: An array of onehot encoded values of shape [num_samples, num_labels].
+            labels: A list of label names, in the same order as the columns of y1 and y2.
+            info: A list containing any additional info about each sample.
+            multilabel: Indicates whether each sample can have multiple labels.
+
+        Returns:
+            A confusion matrix.
+
+        """
         y1 = _onehot_to_sparse(y1, labels, multilabel)
         y2 = _onehot_to_sparse(y2, labels, multilabel)
         if multilabel:
@@ -289,6 +364,17 @@ class ConfusionMatrix:
         return info_lists
 
     def as_array(self, present_only: bool = True) -> Tuple[np.ndarray, List[Label]]:
+        """Get confusion matrix as an array.
+
+        Arguments:
+            present_only: Whether to return an matrix that only includes labels
+                present in y1 and/or y2.
+
+        Returns:
+            A confusion matrix as a numpy array.
+            A list of the confusion matrices labelss.
+
+        """
         if present_only:
             return self._sparse_matrix, self._sparse_labels
         else:
@@ -299,10 +385,30 @@ class ConfusionMatrix:
 
     @_requires_optional("pd", "pandas")
     def as_df(self, present_only: bool = True) -> "pd.DataFrame":
+        """Get confusion matrix as df.
+
+        Arguments:
+            present_only: Whether to return an matrix that only includes labels
+                present in y1 and/or y2.
+
+        Returns:
+            A confusion matrix as pandas dataframe.
+
+        """
         matrix, labels = self.as_array(present_only=present_only)
         return pd.DataFrame(matrix, index=labels, columns=labels)
 
     def as_str(self, present_only: bool = True) -> str:
+        """Get confusion matrix as a string.
+
+        Arguments:
+            present_only: Whether to return an matrix that only includes labels
+                present in y1 and/or y2.
+
+        Returns:
+            A confusion matrix string.
+
+        """
         if present_only:
             matrix = _get_matrix_string(self._sparse_matrix)
             key = _get_key_string(self._sparse_index_to_label)
@@ -312,6 +418,20 @@ class ConfusionMatrix:
         return "".join([m[:-2] + "     " + k for m, k in zip(matrix, key)])
 
     def label_pair_info(self, label_1: Label, label_2: Label) -> List[Any]:
+        """Get a sample information by label pair.
+
+        Arguments:
+            label_1: A true label.
+            label_2: A predicted label.
+
+        Returns:
+            A list of info for samples that had a true label of label_1 and
+            predicted label of label_2.
+
+        Raises:
+            ValueError: if label not present.
+
+        """
         try:
             i = self._label_to_sparse_index[label_1]
             j = self._label_to_sparse_index[label_2]
@@ -323,6 +443,12 @@ class ConfusionMatrix:
                 raise ValueError
 
     def most_confused(self) -> List[Tuple[Label, Label, int]]:
+        """Get a list of label confusions and counts.
+
+        Returns:
+            A list of tuples of format (label1, label1, number of confusions).
+
+        """
         num_labels = len(self._sparse_labels)
         ix, jx = _init_grid_coords(num_labels, num_labels)
         matrix = self._sparse_matrix.copy()
@@ -345,7 +471,9 @@ class ConfusionMatrix:
         return ret
 
     def __str__(self) -> str:
+        """Return confusion matrix string."""
         return self.as_str()
 
     def __repr__(self) -> str:
+        """Return confusion matrix string."""
         return self.as_str()

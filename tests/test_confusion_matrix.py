@@ -1,3 +1,5 @@
+"""Dazed confusion matrix test suite."""
+
 from dataclasses import dataclass
 
 import numpy as np
@@ -9,6 +11,8 @@ import dazed.confusion_matrix as CM
 
 @dataclass
 class SingleLabelData:
+    """Data used for singlelabel tests."""
+
     y1 = [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3]
     y2 = [0, 1, 2, 3, 1, 1, 3, 3, 1, 1, 2, 2, 1, 1, 2, 2]
     labels = [0, 1, 2, 3, 4]
@@ -37,6 +41,7 @@ class SingleLabelData:
 
 
 def multi_to_single(y, combinations):
+    """Convert multilabel indices to singlelabel strings."""
     single = []
     for y_i in y:
         y_i_str = ", ".join([str(i) for i in y_i])
@@ -46,6 +51,8 @@ def multi_to_single(y, combinations):
 
 @dataclass
 class MultiLabelData:
+    """Data used for multilabel tests."""
+
     y1 = [
         [],
         [0],
@@ -116,13 +123,14 @@ class MultiLabelData:
     most_confused = [("", "0", 3), ("0, 1", "1", 2), ("1", "0, 1", 1)]
 
 
-def check_confusion_matrix_values(
+def _check_confusion_matrix_values(
     data,
     confusion_matrix,
     skip_matrix_check=False,
     skip_bin_check=False,
     skip_most_confused_check=False,
 ):
+    """Check confusion matrix values against expected values from data."""
     if not skip_matrix_check:
         sparse_matrix, labels = confusion_matrix.as_array(present_only=True)
         matrix, labels = confusion_matrix.as_array(present_only=False)
@@ -136,6 +144,7 @@ def check_confusion_matrix_values(
 
 
 def test_init_list_array():
+    """It returns a list of lists of correct shape and value."""
     h, w = 4, 5
     val_type = list
     la = CM._init_list_array(h, w, val_type)
@@ -145,6 +154,7 @@ def test_init_list_array():
 
 
 def test_init_grid_coords():
+    """It returns grid coordinates with expected values."""
     h, w = 4, 5
     i, j = CM._init_grid_coords(h, w)
     assert len(i) == len(j) == h * w
@@ -155,26 +165,31 @@ def test_init_grid_coords():
 
 
 def test_all_combinations_int():
+    """It returns expected list of strings when passed integer labels."""
     assert CM._all_combinations([0, 1]) == ["", "0", "0, 1", "1"]
     assert CM._all_combinations([1, 0]) == ["", "0", "0, 1", "1"]
 
 
 def test_all_combinations_str():
+    """It returns expected list of strings when passed string labels."""
     assert CM._all_combinations(["a", "b"]) == ["", "a", "a, b", "b"]
     assert CM._all_combinations(["b", "a"]) == ["", "a", "a, b", "b"]
 
 
 def test_onehot_to_sparse_singlelabel_int():
+    """It returns expected sparse labels when passed integer onehot encoded labels."""
     data = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
     assert CM._onehot_to_sparse(data) == [2, 1, 0]
 
 
 def test_onehot_to_sparse_singlelabel_bool():
+    """It returns expected sparse labels when passed bool onehot encoded labels."""
     data = np.array([[False, False, True], [False, True, False], [True, False, False]])
     assert CM._onehot_to_sparse(data) == [2, 1, 0]
 
 
 def test_onehot_to_sparse_singlelabel_int_raise_error():
+    """It raises error when passed multilabel data without multilabel flag."""
     data = np.array([[0, 0, 0], [0, 0, 1], [1, 0, 1]])
     try:
         CM._onehot_to_sparse(data)
@@ -186,6 +201,7 @@ def test_onehot_to_sparse_singlelabel_int_raise_error():
 
 
 def test_onehot_to_sparse_singlelabel_bool_raise_error():
+    """It raises error when passed multilabel data without multilabel flag."""
     data = np.array([[False, False, False], [False, False, True], [True, False, True]])
     try:
         CM._onehot_to_sparse(data)
@@ -197,46 +213,52 @@ def test_onehot_to_sparse_singlelabel_bool_raise_error():
 
 
 def test_onehot_to_sparse_multilabel_int():
+    """It returns expected sparse labels."""
     data = np.array([[0, 0, 0], [0, 0, 1], [1, 0, 1]])
     assert CM._onehot_to_sparse(data, multilabel=True) == [[], [2], [0, 2]]
 
 
 def test_onehot_to_sparse_multilabel_bool():
+    """It returns expected sparse labels."""
     data = np.array([[False, False, False], [False, False, True], [True, False, True]])
     assert CM._onehot_to_sparse(data, multilabel=True) == [[], [2], [0, 2]]
 
 
 def test_ConfusionMatrix_no_labels():
+    """It returns expected values."""
     data = SingleLabelData()
     cm = CM.ConfusionMatrix(data.y1, data.y2, info=data.info)
     data.matrix = data.sparse_matrix  # matrix is sparse as labels are inferred
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_df_no_labels_singlelabel():
+    """It returns expected values."""
     data = SingleLabelData()
     df = pd.DataFrame({"y1": data.y1, "y2": data.y2, "info": data.info})
     cm = CM.ConfusionMatrix.from_df(df, "y1", "y2", info_names=["info"])
     data.matrix = data.sparse_matrix  # matrix is sparse as labels are inferred
-    check_confusion_matrix_values(data, cm, skip_bin_check=True)
+    _check_confusion_matrix_values(data, cm, skip_bin_check=True)
     for bin_labels, bin_info in data.bins.items():
         df = pd.DataFrame(cm.label_pair_info(*bin_labels), columns=["info"])
         assert df["info"].tolist() == bin_info
 
 
 def test_ConfusionMatrix_from_df_singlelabel():
+    """It returns expected values."""
     data = SingleLabelData()
     df = pd.DataFrame({"y1": data.y1, "y2": data.y2, "info": data.info})
     cm = CM.ConfusionMatrix.from_df(
         df, "y1", "y2", labels=data.labels, info_names=["info"]
     )
-    check_confusion_matrix_values(data, cm, skip_bin_check=True)
+    _check_confusion_matrix_values(data, cm, skip_bin_check=True)
     for bin_labels, bin_info in data.bins.items():
         df = pd.DataFrame(cm.label_pair_info(*bin_labels), columns=["info"])
         assert df["info"].tolist() == bin_info
 
 
 def test_ConfusionMatrix_from_onehot_no_labels_singlelabel():
+    """It returns expected values."""
     data = SingleLabelData()
     y1_onehot = np.zeros((len(data.y1), len(data.labels)))
     y1_onehot[list(range(len(data.y1))), data.y1] = 1
@@ -244,10 +266,11 @@ def test_ConfusionMatrix_from_onehot_no_labels_singlelabel():
     y2_onehot[list(range(len(data.y2))), data.y2] = 1
     cm = CM.ConfusionMatrix.from_onehot(y1_onehot, y2_onehot, info=data.info)
     data.matrix = data.sparse_matrix  # matrix is sparse as labels are inferred
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_onehot_no_labels_multilabel():
+    """It returns expected values."""
     data = MultiLabelData()
     y1_onehot = np.zeros((len(data.y1), len(data.labels)))
     y2_onehot = np.zeros((len(data.y2), len(data.labels)))
@@ -260,10 +283,11 @@ def test_ConfusionMatrix_from_onehot_no_labels_multilabel():
         y1_onehot, y2_onehot, info=data.info, multilabel=True
     )
     data.matrix = data.sparse_matrix  # matrix is sparse as labels are inferred
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_onehot_singlelabel():
+    """It returns expected values."""
     data = SingleLabelData()
     y1_onehot = np.zeros((len(data.y1), len(data.labels)))
     y1_onehot[list(range(len(data.y1))), data.y1] = 1
@@ -272,10 +296,11 @@ def test_ConfusionMatrix_from_onehot_singlelabel():
     cm = CM.ConfusionMatrix.from_onehot(
         y1_onehot, y2_onehot, labels=data.labels, info=data.info
     )
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_onehot_multilabel():
+    """It returns expected values."""
     data = MultiLabelData()
     y1_onehot = np.zeros((len(data.y1), len(data.labels)))
     y2_onehot = np.zeros((len(data.y2), len(data.labels)))
@@ -287,10 +312,11 @@ def test_ConfusionMatrix_from_onehot_multilabel():
     cm = CM.ConfusionMatrix.from_onehot(
         y1_onehot, y2_onehot, labels=data.labels, info=data.info, multilabel=True
     )
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_onehot_string_labels_singlelabel():
+    """It returns expected values."""
     data = SingleLabelData()
     y1_onehot = np.zeros((len(data.y1), len(data.labels)))
     y1_onehot[list(range(len(data.y1))), data.y1] = 1
@@ -302,10 +328,11 @@ def test_ConfusionMatrix_from_onehot_string_labels_singlelabel():
     cm = CM.ConfusionMatrix.from_onehot(
         y1_onehot, y2_onehot, labels=data.labels, info=data.info
     )
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_onehot_string_labels_multilabel():
+    """It returns expected values."""
     data = MultiLabelData()
     y1_onehot = np.zeros((len(data.y1), len(data.labels)))
     y2_onehot = np.zeros((len(data.y2), len(data.labels)))
@@ -320,38 +347,42 @@ def test_ConfusionMatrix_from_onehot_string_labels_multilabel():
     cm = CM.ConfusionMatrix.from_onehot(
         y1_onehot, y2_onehot, labels=data.labels, info=data.info, multilabel=True
     )
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_sparse_no_labels_singlelabel():
+    """It returns expected values."""
     data = SingleLabelData()
     cm = CM.ConfusionMatrix.from_sparse(data.y1, data.y2, info=data.info)
     data.matrix = data.sparse_matrix  # matrix is sparse as labels are inferred
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_sparse_no_labels_multilabel():
+    """It returns expected values."""
     data = MultiLabelData()
     cm = CM.ConfusionMatrix.from_sparse(
         data.y1, data.y2, info=data.info, multilabel=True
     )
     data.matrix = data.sparse_matrix  # matrix is sparse as labels are inferred
     data.bins = {(str(k1), str(k2)): v for (k1, k2), v in data.bins.items()}
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_sparse_singlelabel():
+    """It returns expected values."""
     data = SingleLabelData()
     cm = CM.ConfusionMatrix.from_sparse(
         data.y1, data.y2, labels=data.labels, info=data.info
     )
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
 
 
 def test_ConfusionMatrix_from_sparse_multilabel():
+    """It returns expected values."""
     data = MultiLabelData()
     cm = CM.ConfusionMatrix.from_sparse(
         data.y1, data.y2, labels=data.labels, info=data.info, multilabel=True
     )
     data.bins = {(str(k1), str(k2)): v for (k1, k2), v in data.bins.items()}
-    check_confusion_matrix_values(data, cm)
+    _check_confusion_matrix_values(data, cm)
