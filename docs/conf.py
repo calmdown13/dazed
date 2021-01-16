@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "dazed"
+project = "Dazed"
 copyright = "2021, Callum Downie"
 author = "Callum Downie"
 

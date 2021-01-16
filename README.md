@@ -1,6 +1,7 @@
 ![linting](https://github.com/calmdown13/dazed/workflows/Linting/badge.svg)
 ![tests](https://github.com/calmdown13/dazed/workflows/Tests/badge.svg)
 [![PyPI](https://img.shields.io/pypi/v/dazed.svg)](https://pypi.org/project/dazed/)
+[![Read the Docs](https://readthedocs.org/projects/dazed/badge/)](https://dazed.readthedocs.io/)
 
 # 💫 Dazed
 Dazed is little confusion matrix package designed to make your life easier. Its main advantages over alternatives (such as `sklean.metrics.confusion_matrix`) are:

@@ -3,6 +3,7 @@ name = "dazed"
 version = "0.1.1"
 description = "A confusion matrix package."
 authors = ["calmdown13 <callum@callumdownie.com>"]
+documentation = "https://dazed.readthedocs.io"
 
 [tool.poetry.dependencies]
 python = "^3.6.1"
