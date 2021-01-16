@@ -150,3 +150,10 @@ Ah yes looks like your model might be basing much of its prediction on animal
 colour, maybe time to go collect some more data.
 
 To find out more about dazed take a look at the API Reference.
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
