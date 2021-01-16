@@ -9,9 +9,10 @@ extensions = [
     "sphinx_autodoc_typehints",
 ]
 html_theme_options = {
+    "description": "A confusion matrix package.",
     "github_user": "calmdown13",
     "github_repo": "dazed",
-    "description": "A confusion matrix package.",
 }
+
 
 napoleon_include_init_with_doc = True

@@ -172,6 +172,9 @@ class ConfusionMatrix:
     ):
         """Contruct a confusion matrix from sparse values.
 
+        In most cases it's recommended that you use the "from..." methods instead
+        as they offer additional support for multilabel data.
+
         Arguments:
             y1: A list of true labels.
             y2: A list of predicted labels.
@@ -179,7 +182,6 @@ class ConfusionMatrix:
             info: A list containing any additional info about each sample.
 
         Example:
-            >>> from dazed import ConfusionMatrix
             >>> truth = ["cat", "dog", "cat", "dog", "fish"]
             >>> pred = ["cat", "dog", "dog", "cat", "fish"]
             >>> ConfusionMatrix(truth, pred)
@@ -248,6 +250,34 @@ class ConfusionMatrix:
         Raises:
             ValueError: If label y1_names or y2 names are not the correct type.
 
+        Example:
+            >>> sparse_df = pd.DataFrame()
+            >>> sparse_df["truth"] = ["cat", "dog", "cat", "dog", "fish"]
+            >>> sparse_df["pred"] = ["cat", "dog", "dog", "cat", "fish"]
+            >>> ConfusionMatrix.from_df(sparse_df, "truth", "pred")
+              | 0 1 2     index | label
+            ---------     -------------
+            0 | 1 1 0         0 |   cat
+            1 | 1 1 0         1 |   dog
+            2 | 0 0 1         2 |  fish
+            ---------     -------------
+            >>> onehot_df = pd.DataFrame()
+            >>> onehot_df["cat_truth"] = [0, 1, 0, 1]
+            >>> onehot_df["dog_truth"] = [1, 0, 1, 0]
+            >>> onehot_df["cat_pred"] = [0, 1, 1, 0]
+            >>> onehot_df["dog_pred"] = [1, 0, 0, 1]
+            >>> ConfusionMatrix.from_df(
+            ...    onehot_df,
+            ...    ["cat_truth", "dog_truth"],
+            ...    ["cat_pred", "dog_pred"],
+            ...    ["cat", "dog"],
+            ... )
+              | 0 1     index | label
+            -------     -------------
+            0 | 1 1         0 |   cat
+            1 | 1 1         1 |   dog
+            -------     -------------
+
         """
         assert type(y1_names) == type(y2_names)
         if info_names is None:
@@ -294,6 +324,17 @@ class ConfusionMatrix:
         Returns:
             A confusion matrix.
 
+        Example:
+            >>> truth = ["cat", "dog", "cat", "dog", "fish"]
+            >>> pred = ["cat", "dog", "dog", "cat", "fish"]
+            >>> ConfusionMatrix.from_sparse(truth, pred)
+              | 0 1 2     index | label
+            ---------     -------------
+            0 | 1 1 0         0 |   cat
+            1 | 1 1 0         1 |   dog
+            2 | 0 0 1         2 |  fish
+            ---------     -------------
+
         """
         if multilabel:
             if labels is not None:
@@ -322,6 +363,16 @@ class ConfusionMatrix:
 
         Returns:
             A confusion matrix.
+
+        Example:
+            >>> truth = np.array([[0, 1], [1, 0], [0, 1], [1, 0]])
+            >>> pred = np.array([[0, 1], [1, 0], [1, 0], [0, 1]])
+            >>> ConfusionMatrix.from_onehot(truth, pred, ["cat", "dog"])
+              | 0 1     index | label
+            -------     -------------
+            0 | 1 1         0 |   cat
+            1 | 1 1         1 |   dog
+            -------     -------------
 
         """
         y1 = _onehot_to_sparse(y1, labels, multilabel)
@@ -374,6 +425,14 @@ class ConfusionMatrix:
             A confusion matrix as a numpy array.
             A list of the confusion matrices labelss.
 
+        Example:
+            >>> truth = ["cat", "dog", "cat", "dog", "fish"]
+            >>> pred = ["cat", "dog", "dog", "cat", "fish"]
+            >>> ConfusionMatrix.from_sparse(truth, pred).as_array()
+            (array([[1, 1, 0],
+                    [1, 1, 0],
+                    [0, 0, 1]]), ['cat', 'dog', 'fish'])
+
         """
         if present_only:
             return self._sparse_matrix, self._sparse_labels
@@ -394,6 +453,15 @@ class ConfusionMatrix:
         Returns:
             A confusion matrix as pandas dataframe.
 
+        Example:
+            >>> truth = ["cat", "dog", "cat", "dog", "fish"]
+            >>> pred = ["cat", "dog", "dog", "cat", "fish"]
+            >>> ConfusionMatrix.from_sparse(truth, pred).as_df()
+                cat  dog  fish
+            cat     1    1     0
+            dog     1    1     0
+            fish    0    0     1
+
         """
         matrix, labels = self.as_array(present_only=present_only)
         return pd.DataFrame(matrix, index=labels, columns=labels)
@@ -407,6 +475,17 @@ class ConfusionMatrix:
 
         Returns:
             A confusion matrix string.
+
+        Example:
+            >>> truth = ["cat", "dog", "cat", "dog", "fish"]
+            >>> pred = ["cat", "dog", "dog", "cat", "fish"]
+            >>> print(ConfusionMatrix.from_sparse(truth, pred).as_str())
+              | 0 1 2     index | label
+            ---------     -------------
+            0 | 1 1 0         0 |   cat
+            1 | 1 1 0         1 |   dog
+            2 | 0 0 1         2 |  fish
+            ---------     -------------
 
         """
         if present_only:
@@ -431,6 +510,14 @@ class ConfusionMatrix:
         Raises:
             ValueError: if label not present.
 
+        Example:
+            >>> truth = ["cat", "dog", "cat", "dog", "fish"]
+            >>> pred = ["cat", "dog", "dog", "cat", "fish"]
+            >>> filenames = ["img0.jpg", "img1.jpg", "img2.jpg", "img3.jpg", "img4.jpg"]
+            >>> cm = ConfusionMatrix.from_sparse(truth, pred, info=filenames)
+            >>> cm.label_pair_info("cat", "dog")
+            ['img2.jpg']
+
         """
         try:
             i = self._label_to_sparse_index[label_1]
@@ -447,6 +534,12 @@ class ConfusionMatrix:
 
         Returns:
             A list of tuples of format (label1, label1, number of confusions).
+
+        >>> truth = ["cat", "dog", "cat", "dog", "fish"]
+        >>> pred = ["cat", "cat", "dog", "cat", "fish"]
+        >>> cm = ConfusionMatrix.from_sparse(truth, pred)
+        >>> cm.most_confused()
+        [('dog', 'cat', 2), ('cat', 'dog', 1)]
 
         """
         num_labels = len(self._sparse_labels)
