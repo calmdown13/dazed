@@ -11,7 +11,7 @@
 💫 Dazed - A Confusion Matrix Package
 *************************************
 
-Dazed is little confusion matrix package designed to make your life easier.
+Dazed is a little confusion matrix package designed to make your life easier.
 Its key features are:
 
 -  support for lots of different data formats (sparse integers, sparse strings, one-hot arrays, dataframes)

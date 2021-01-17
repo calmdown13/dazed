@@ -5,6 +5,7 @@ description = "A confusion matrix package."
 authors = ["calmdown13 <callum@callumdownie.com>"]
 documentation = "https://dazed.readthedocs.io"
 readme = "README.rst"
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.6.1"
