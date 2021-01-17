@@ -11,7 +11,7 @@ jobs:
         architecture: x64
     - run: pip install poetry
     - run: poetry install -E pandas
-    - run: poetry run pytest --cov
+    - run: poetry run pytest --cov --xdoctest
     - run: poetry run pytype
   tests-py37:
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
         architecture: x64
     - run: pip install poetry
     - run: poetry install -E pandas
-    - run: poetry run pytest --cov
+    - run: poetry run pytest --cov --xdoctest
     - run: poetry run pytype
   tests-py38:
     runs-on: ubuntu-latest
@@ -35,5 +35,5 @@ jobs:
         architecture: x64
     - run: pip install poetry
     - run: poetry install -E pandas
-    - run: poetry run pytest --cov
+    - run: poetry run pytest --cov --xdoctest
     - run: poetry run pytype
