@@ -16,8 +16,8 @@ Its key features are:
 
 -  support for lots of different data formats (sparse integers, sparse strings, one-hot arrays, dataframes)
 -  support for multilabel data
--  functionality to list most confused labels
--  functionality to support exploration of confused samples
+-  ability to list most confused labels
+-  ability to index sample information by confused label names
 -  prints out nicely
 
 
@@ -123,7 +123,9 @@ decide to go back through and label your images for animal colour.
       ["fish", "orange"],
       ["cat", "white"]
    ]
-   cm = ConfusionMatrix.from_sparse(truth, pred, info=filenames, multilabel=True)
+   cm = ConfusionMatrix.from_sparse(
+      truth, pred, info=filenames, multilabel=True
+   )
    print(cm)
 
 .. code-block:: console
