@@ -212,9 +212,6 @@ class ConfusionMatrix:
             self._label_to_sparse_index,
             self._sparse_index_to_label,
         ) = self._create_label_maps(self._sparse_labels)
-        self._label_to_index, self._index_to_label = self._create_label_maps(
-            self._labels
-        )
 
         # cm and info_lists
         self._sparse_matrix = self._create_matrix(y1, y2, self._label_to_sparse_index)
@@ -437,8 +434,14 @@ class ConfusionMatrix:
         if present_only:
             return self._sparse_matrix, self._sparse_labels
         else:
+            if len(self._labels) > 8:
+                raise ValueError(
+                    f"You have too many classes! Setting `present_only=False` "
+                    f"would create a {len(self._labels)}x{len(self._labels)} array. "
+                )
+            label_to_index, _ = self._create_label_maps(self._labels)
             return (
-                self._create_matrix(self._y1, self._y2, self._label_to_index),
+                self._create_matrix(self._y1, self._y2, label_to_index),
                 self._labels,
             )
 
@@ -492,8 +495,14 @@ class ConfusionMatrix:
             matrix = _get_matrix_string(self._sparse_matrix)
             key = _get_key_string(self._sparse_index_to_label)
         else:
+            if len(self._labels) > 8:
+                raise ValueError(
+                    f"You have too many classes! Setting `present_only=False` "
+                    f"would create a {len(self._labels)}x{len(self._labels)} array. "
+                )
+            _, index_to_label = self._create_label_maps(self._labels)
             matrix = _get_matrix_string(self.as_array(present_only=present_only)[0])
-            key = _get_key_string(self._index_to_label)
+            key = _get_key_string(index_to_label)
         return "".join([m[:-2] + "     " + k for m, k in zip(matrix, key)])
 
     def label_pair_info(self, label_1: Label, label_2: Label) -> List[Any]:
@@ -524,10 +533,14 @@ class ConfusionMatrix:
             j = self._label_to_sparse_index[label_2]
             return self._sparse_info_lists[i][j]
         except KeyError:
-            if label_1 in self._label_to_index and label_2 in self._label_to_index:
-                return []
+            if isinstance(label_1, str) and isinstance(label_2, str):
+                labels_to_test = label_1.split(", ") + label_2.split(", ")
             else:
-                raise ValueError
+                labels_to_test = [label_1, label_2]
+            for label in labels_to_test:
+                if label not in self._labels:
+                    raise ValueError
+            return []
 
     def most_confused(self) -> List[Tuple[Label, Label, int]]:
         """Get a list of label confusions and counts.
