@@ -1,6 +1,6 @@
 """Dazed confusion matrix package."""
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 from dazed.confusion_matrix import ConfusionMatrix
 
