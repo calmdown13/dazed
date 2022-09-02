@@ -378,6 +378,15 @@ def test_ConfusionMatrix_from_sparse_singlelabel():
     _check_confusion_matrix_values(data, cm)
 
 
+def test_ConfusionMatrix_from_sparse_singlelabel_np_values():
+    """It returns expected values."""
+    data = SingleLabelData()
+    cm = CM.ConfusionMatrix.from_sparse(
+        np.array(data.y1), np.array(data.y2), labels=data.labels, info=data.info
+    )
+    _check_confusion_matrix_values(data, cm)
+
+
 def test_ConfusionMatrix_from_sparse_multilabel():
     """It returns expected values."""
     data = MultiLabelData()

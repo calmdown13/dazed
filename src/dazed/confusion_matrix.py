@@ -9,6 +9,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     TypeVar,
     Union,
 )
@@ -155,6 +156,16 @@ def _str_len(val: Any) -> int:
     return len(str(val))
 
 
+def _first_non_array_type(a: Union[List[Any], np.ndarray]) -> Optional[Type]:
+    for ai in a:
+        if not isinstance(ai, (list, np.ndarray)):
+            return type(ai)
+        t = _first_non_array_type(ai)
+        if t is not None:
+            return t
+    return None
+
+
 class ConfusionMatrix:
     """Construct a confusion matrix.
 
@@ -165,8 +176,8 @@ class ConfusionMatrix:
 
     def __init__(
         self,
-        y1: List[Label],
-        y2: List[Label],
+        y1: Union[List[Label], np.ndarray],
+        y2: Union[List[Label], np.ndarray],
         labels: Optional[List[Label]] = None,
         info: Optional[List[Any]] = None,
     ):
@@ -193,6 +204,11 @@ class ConfusionMatrix:
             ---------     -------------
 
         """
+        if isinstance(y1, np.ndarray):
+            y1 = y1.tolist()
+        if isinstance(y2, np.ndarray):
+            y2 = y2.tolist()
+
         self._y1 = y1
         self._y2 = y2
 
@@ -335,7 +351,15 @@ class ConfusionMatrix:
         """
         if multilabel:
             if labels is not None:
-                labels = _all_combinations(labels)
+                if (
+                    _first_non_array_type(y1) is int
+                    and _first_non_array_type(labels) is str
+                ):
+                    y1 = [[labels[i] for i in yi] for yi in y1]
+                    y2 = [[labels[i] for i in yi] for yi in y2]
+                labels = None
+            y1 = [sorted(yi) for yi in y1]
+            y2 = [sorted(yi) for yi in y2]
             y1 = [", ".join([str(i) for i in yi]) for yi in y1]
             y2 = [", ".join([str(i) for i in yi]) for yi in y2]
         return cls(y1, y2, labels=labels, info=info)
@@ -343,8 +367,8 @@ class ConfusionMatrix:
     @classmethod
     def from_onehot(
         cls,
-        y1: np.ndarray,
-        y2: np.ndarray,
+        y1: Union[List[List[int]], np.ndarray],
+        y2: Union[List[List[int]], np.ndarray],
         labels: Optional[List[Label]] = None,
         info: Optional[List[Any]] = None,
         multilabel: bool = False,
@@ -372,14 +396,13 @@ class ConfusionMatrix:
             -------     -------------
 
         """
+        if isinstance(y1, list):
+            y1 = np.ndarray(y1)
+        if isinstance(y1, list):
+            y2 = np.ndarray(y2)
         y1 = _onehot_to_sparse(y1, labels, multilabel)
         y2 = _onehot_to_sparse(y2, labels, multilabel)
-        if multilabel:
-            if labels is not None:
-                labels = _all_combinations(labels)
-            y1 = [", ".join([str(i) for i in yi]) for yi in y1]
-            y2 = [", ".join([str(i) for i in yi]) for yi in y2]
-        return cls(y1, y2, labels=labels, info=info)
+        return cls.from_sparse(y1, y2, labels=labels, info=info, multilabel=multilabel)
 
     @staticmethod
     def _create_label_maps(labels: List[T]) -> Tuple[Dict[T, int], Dict[int, T]]:
