@@ -9,6 +9,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     TypeVar,
     Union,
 )
@@ -155,6 +156,16 @@ def _str_len(val: Any) -> int:
     return len(str(val))
 
 
+def _first_non_array_type(a: Union[List[Any], np.ndarray]) -> Optional[Type]:
+    for ai in a:
+        if not isinstance(ai, (list, np.ndarray)):
+            return type(ai)
+        t = _first_non_array_type(ai)
+        if t is not None:
+            return t
+    return None
+
+
 class ConfusionMatrix:
     """Construct a confusion matrix.
 
@@ -193,6 +204,11 @@ class ConfusionMatrix:
             ---------     -------------
 
         """
+        if isinstance(y1, np.ndarray):
+            y1 = y1.tolist()
+        if isinstance(y1, np.ndarray):
+            y2 = y2.tolist()
+
         self._y1 = y1
         self._y2 = y2
 
@@ -303,8 +319,8 @@ class ConfusionMatrix:
     @classmethod
     def from_sparse(
         cls,
-        y1: SparseValues,
-        y2: SparseValues,
+        y1: Union[SparseValues, np.ndarray],
+        y2: Union[SparseValues, np.ndarray],
         labels: Optional[List[Label]] = None,
         info: Optional[List[Any]] = None,
         multilabel: bool = False,
@@ -333,9 +349,18 @@ class ConfusionMatrix:
             ---------     -------------
 
         """
+        if labels is not None:
+            if (
+                _first_non_array_type(y1) is int
+                and _first_non_array_type(labels) is str
+            ):
+                y1 = [[labels[i] for i in yi] for yi in y1]
+                y2 = [[labels[i] for i in yi] for yi in y2]
         if multilabel:
             if labels is not None:
                 labels = _all_combinations(labels)
+            y1 = [sorted(yi) for yi in y1]
+            y2 = [sorted(yi) for yi in y2]
             y1 = [", ".join([str(i) for i in yi]) for yi in y1]
             y2 = [", ".join([str(i) for i in yi]) for yi in y2]
         return cls(y1, y2, labels=labels, info=info)
@@ -343,8 +368,8 @@ class ConfusionMatrix:
     @classmethod
     def from_onehot(
         cls,
-        y1: np.ndarray,
-        y2: np.ndarray,
+        y1: Union[np.ndarray, List[List[int]]],
+        y2: Union[np.ndarray, List[List[int]]],
         labels: Optional[List[Label]] = None,
         info: Optional[List[Any]] = None,
         multilabel: bool = False,
@@ -372,14 +397,13 @@ class ConfusionMatrix:
             -------     -------------
 
         """
+        if isinstance(y1, list):
+            y1 = np.array(y1)
+        if isinstance(y1, list):
+            y2 = np.array(y2)
         y1 = _onehot_to_sparse(y1, labels, multilabel)
         y2 = _onehot_to_sparse(y2, labels, multilabel)
-        if multilabel:
-            if labels is not None:
-                labels = _all_combinations(labels)
-            y1 = [", ".join([str(i) for i in yi]) for yi in y1]
-            y2 = [", ".join([str(i) for i in yi]) for yi in y2]
-        return cls(y1, y2, labels=labels, info=info)
+        return cls.from_sparse(y1, y2, labels=labels, info=info, multilabel=multilabel)
 
     @staticmethod
     def _create_label_maps(labels: List[T]) -> Tuple[Dict[T, int], Dict[int, T]]:
@@ -434,11 +458,6 @@ class ConfusionMatrix:
         if present_only:
             return self._sparse_matrix, self._sparse_labels
         else:
-            if len(self._labels) > 8:
-                raise ValueError(
-                    f"You have too many classes! Setting `present_only=False` "
-                    f"would create a {len(self._labels)}x{len(self._labels)} array. "
-                )
             label_to_index, _ = self._create_label_maps(self._labels)
             return (
                 self._create_matrix(self._y1, self._y2, label_to_index),
@@ -495,11 +514,6 @@ class ConfusionMatrix:
             matrix = _get_matrix_string(self._sparse_matrix)
             key = _get_key_string(self._sparse_index_to_label)
         else:
-            if len(self._labels) > 8:
-                raise ValueError(
-                    f"You have too many classes! Setting `present_only=False` "
-                    f"would create a {len(self._labels)}x{len(self._labels)} array. "
-                )
             _, index_to_label = self._create_label_maps(self._labels)
             matrix = _get_matrix_string(self.as_array(present_only=present_only)[0])
             key = _get_key_string(index_to_label)
